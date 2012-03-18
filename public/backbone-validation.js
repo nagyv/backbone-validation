@@ -78,6 +78,9 @@ Backbone.Validation = function(model){
       }, '');
   };
      
+  if(model.validate) {
+    model._saved_validate = model.validate;
+  }
   /**
    * Instead of a simple string we always return an array of error messages if validation fails
    */
@@ -90,6 +93,11 @@ Backbone.Validation = function(model){
     var result = [],
         invalidAttrs = [];
 
+    if (model._saved_validate) {
+      var res = model._saved_validate(attrs) || false;
+      if(res) result.push(res);
+    }
+
     for (var changedAttr in attrs) {
         var error = self.validateAttr(changedAttr, attrs[changedAttr]);
         if (error) {
@@ -97,8 +105,6 @@ Backbone.Validation = function(model){
             invalidAttrs.push(changedAttr);
         }
     }
-
-    // TODO: add call to super
 
     if(!_.isEmpty(result)) return result;
   };
@@ -108,7 +114,7 @@ Backbone.Validation.OldModel = Backbone.Model;
 Backbone.Validation.Model = Backbone.Model.extend({
   initialize: function() {
     this.validate = new Backbone.Validation(this);
-    Backbone.Validation.OldModel.prototype.initialize.call(this);
+    Backbone.Validation.OldModel.prototype.initialize.apply(this, arguments);
   }
 });
 Backbone.Model = Backbone.Validation.Model;
